@@ -1,0 +1,20 @@
+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+copyrights:
+- Copyright (C) 2026 OHB System AG
+- Copyright (C) 2026 embedded brains GmbH & Co. KG
+enabled-by: true
+functional-type: function
+links:
+- role: interface-function
+  uid: ../if/spin-unlock
+- role: function-implementation
+  uid: /score/isr/req/lock-release
+rationale: null
+requirement-type: functional
+text: |
+  The ${../if/spin-unlock:/name} function shall release the spin lock referenced
+  by the ${../if/spin-unlock:/params[0]/name} parameter as specified by
+  ${/score/isr/req/lock-release:/spec} where the lock disables maskable
+  interrupts at the acquire and restores their status from the lock object at the
+  release.
+type: requirement
