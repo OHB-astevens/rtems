@@ -417,9 +417,12 @@ source:
 - cpukit/posix/src/pthreadsetaffinitynp.c
 - cpukit/posix/src/pthreadsetnamenp.c
 - cpukit/posix/src/semdestroy.c
+- cpukit/posix/src/semgetvalue.c
 - cpukit/posix/src/seminit.c
 - cpukit/posix/src/sempost.c
+- cpukit/posix/src/semtimedwait.c
 - cpukit/posix/src/semtrywait.c
+- cpukit/posix/src/semwait.c
 - cpukit/posix/src/setcancelstate.c
 - cpukit/posix/src/setcanceltype.c
 - cpukit/posix/src/testcancel.c
