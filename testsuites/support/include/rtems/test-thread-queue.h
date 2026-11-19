@@ -1274,6 +1274,28 @@ Status_Control TQEnqueueClassicSem( TQContext *ctx, TQWait wait );
 Status_Control TQSurrenderClassicSem( TQContext *ctx );
 
 /**
+ * @brief Obtains the POSIX semaphore of the test context.
+ *
+ * TQ_WAIT_FOREVER uses sem_wait(). TQ_WAIT_TIMED uses sem_timedwait() with the
+ * longest timeout. TQ_NO_WAIT uses sem_trywait().
+ *
+ * @param ctx is the thread queue test context.
+ * @param wait is the wait behaviour of the obtain.
+ *
+ * @return Returns the status of sem_wait() or sem_trywait().
+ */
+Status_Control TQEnqueuePOSIXSem( TQContext *ctx, TQWait wait );
+
+/**
+ * @brief Posts the POSIX semaphore of the test context.
+ *
+ * @param ctx is the thread queue test context.
+ *
+ * @return Returns the status of sem_post().
+ */
+Status_Control TQSurrenderPOSIXSem( TQContext *ctx );
+
+/**
  * @brief Gets the owner of the Classic API semaphore of the test context.
  *
  * An invalid semaphore identifier ends the test case.
@@ -1375,6 +1397,27 @@ uint32_t TQSemGetCountClassic( TQSemContext *ctx );
  * @param count is the new count.
  */
 void TQSemSetCountClassic( TQSemContext *ctx, uint32_t count );
+
+/**
+ * @brief Gets the count of the POSIX semaphore of the test context.
+ *
+ * The function reads the count directly from the semaphore object.
+ *
+ * @param ctx is the semaphore test context.
+ *
+ * @return Returns the count of the semaphore.
+ */
+uint32_t TQSemGetCountPOSIX( TQSemContext *ctx );
+
+/**
+ * @brief Sets the count of the POSIX semaphore of the test context.
+ *
+ * The function writes the count directly to the semaphore object.
+ *
+ * @param ctx is the semaphore test context.
+ * @param count is the new count.
+ */
+void TQSemSetCountPOSIX( TQSemContext *ctx, uint32_t count );
 
 /**
  * @brief This enumeration provides the locking protocols of a mutex under
