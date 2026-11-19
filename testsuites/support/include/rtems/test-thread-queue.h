@@ -1320,6 +1320,11 @@ typedef struct TQSemContext {
   TQSemVariant variant;
 
   /**
+   * @brief This member specifies the maximum count of a counting semaphore.
+   */
+  uint32_t max_count;
+
+  /**
    * @brief This member provides the semaphore get count handler.
    */
   uint32_t ( *get_count )( struct TQSemContext * );
