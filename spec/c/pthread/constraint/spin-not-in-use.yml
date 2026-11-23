@@ -1,0 +1,13 @@
+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+copyrights:
+- Copyright (C) 2026 OHB System AG
+enabled-by: true
+links:
+- role: requirement-refinement
+  uid: /req/usage-constraints
+rationale: null
+text: |
+  The function shall not be called while a processor owns the spin lock or waits
+  for the spin lock. Calling the function under this condition is undefined
+  behaviour.
+type: constraint

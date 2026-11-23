@@ -1,0 +1,13 @@
+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+copyrights:
+- Copyright (C) 2026 OHB System AG
+enabled-by: true
+links:
+- role: requirement-refinement
+  uid: /req/usage-constraints
+rationale: null
+text: |
+  While the calling processor owns the spin lock or waits for the spin lock,
+  maskable interrupts shall be disabled on the processor. Enabling maskable
+  interrupts under this condition is undefined behaviour.
+type: constraint
