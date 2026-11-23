@@ -11,6 +11,7 @@
 
 /*
  * Copyright (C) 2026 embedded brains GmbH & Co. KG
+ * Copyright (C) 2026 OHB System AG
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,6 +43,7 @@
 #include <rtems/test.h>
 
 #include <rtems/counter.h>
+#include <rtems/posix/spinlockimpl.h>
 
 #if defined( RTEMS_SMP )
 #include <rtems/score/smpimpl.h>
@@ -298,3 +300,86 @@ void ISRLockWaitForWorker( ISRLockWorker *worker )
   _Thread_Dispatch_enable( cpu_self );
 }
 #endif
+
+static pthread_spinlock_t *POSIXLock( const ISRLockContext *ctx )
+{
+  return ctx->lock;
+}
+
+static void POSIXInitialize( ISRLockContext *ctx )
+{
+  (void) pthread_spin_init( POSIXLock( ctx ), PTHREAD_PROCESS_PRIVATE );
+}
+
+static void POSIXDestroy( ISRLockContext *ctx )
+{
+  (void) pthread_spin_destroy( POSIXLock( ctx ) );
+}
+
+static void POSIXSpinLock(
+  ISRLockContext   *ctx,
+  ISR_lock_Context *lock_context
+)
+{
+  (void) lock_context;
+  (void) pthread_spin_lock( POSIXLock( ctx ) );
+}
+
+static void POSIXSpinTrylock(
+  ISRLockContext   *ctx,
+  ISR_lock_Context *lock_context
+)
+{
+  (void) lock_context;
+  (void) pthread_spin_trylock( POSIXLock( ctx ) );
+}
+
+static void POSIXSpinUnlock(
+  ISRLockContext   *ctx,
+  ISR_lock_Context *lock_context
+)
+{
+  (void) lock_context;
+  (void) pthread_spin_unlock( POSIXLock( ctx ) );
+}
+
+static ISR_Level POSIXGetSavedLevel(
+  const ISRLockContext   *ctx,
+  const ISR_lock_Context *lock_context
+)
+{
+  (void) lock_context;
+  return POSIXLock( ctx )->_interrupt_state;
+}
+
+#if defined( RTEMS_SMP )
+static const SMP_ticket_lock_Control *POSIXGetTicketLock(
+  const ISRLockContext *ctx
+)
+{
+  return &_POSIX_Spinlock_Get( POSIXLock( ctx ) )->Lock;
+}
+#endif
+
+void ISRLockSetPOSIX(
+  ISRLockContext     *ctx,
+  pthread_spinlock_t *lock,
+  bool                trylock
+)
+{
+  ctx->restore = ISR_LOCK_RESTORE_TO_OBJECT;
+  ctx->method = ISR_LOCK_METHOD_FUNCTION;
+  ctx->lock = lock;
+  ctx->lock_size = sizeof( *lock );
+  ctx->initialize = POSIXInitialize;
+  ctx->destroy = POSIXDestroy;
+  ctx->acquire = trylock ? POSIXSpinTrylock : POSIXSpinLock;
+  ctx->release = POSIXSpinUnlock;
+  ctx->interrupt_disable = NULL;
+  ctx->disable_acquire_isr = NULL;
+  ctx->interrupt_enable = NULL;
+  ctx->get_saved_level = POSIXGetSavedLevel;
+#if defined( RTEMS_SMP )
+  ctx->get_ticket_lock = POSIXGetTicketLock;
+#endif
+}
