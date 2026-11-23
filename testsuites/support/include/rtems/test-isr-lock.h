@@ -19,6 +19,7 @@
 
 /*
  * Copyright (C) 2026 embedded brains GmbH & Co. KG
+ * Copyright (C) 2026 OHB System AG
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,6 +48,7 @@
 
 #include <rtems/test-support.h>
 
+#include <pthread.h>
 #include <rtems.h>
 #include <rtems/score/atomic.h>
 #include <rtems/score/isrlevel.h>
@@ -245,6 +247,28 @@ void ISRLockSetClassic(
   ISRLockContext       *ctx,
   rtems_interrupt_lock *lock,
   ISRLockRestore        restore
+);
+
+/**
+ * @brief Sets the lock operations of the POSIX spin lock functions.
+ *
+ * The restore is ISR_LOCK_RESTORE_TO_OBJECT, since the spin lock functions
+ * save the status of maskable interrupts in the spin lock object. The method
+ * of ISRLockContext::initialize is ISR_LOCK_METHOD_FUNCTION, since POSIX
+ * defines no initializer for a spin lock. The operations discard the return
+ * values of the functions.
+ *
+ * @param[out] ctx is the lock context.
+ *
+ * @param lock is the spin lock under test.
+ *
+ * @param trylock selects the acquire function. If it is true, the acquire is
+ *   pthread_spin_trylock(), otherwise pthread_spin_lock().
+ */
+void ISRLockSetPOSIX(
+  ISRLockContext     *ctx,
+  pthread_spinlock_t *lock,
+  bool                trylock
 );
 
 /**
