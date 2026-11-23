@@ -1,0 +1,17 @@
+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+copyrights:
+- Copyright (C) 2026 OHB System AG
+enabled-by: true
+links:
+- role: requirement-refinement
+  uid: /req/usage-constraints
+rationale: |
+  Each spin lock saves the status of maskable interrupts in its object. Suppose a
+  processor acquires spin lock A with maskable interrupts enabled and then spin
+  lock B. If it releases A first, it enables maskable interrupts while it still
+  owns B, which is undefined behaviour.
+text: |
+  While the calling processor owns more than one spin lock, the function shall
+  release the spin lock which the processor acquired last. Releasing the spin
+  locks in another order is undefined behaviour.
+type: constraint

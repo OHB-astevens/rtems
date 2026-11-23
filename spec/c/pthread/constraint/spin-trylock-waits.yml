@@ -1,0 +1,13 @@
+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+copyrights:
+- Copyright (C) 2026 OHB System AG
+enabled-by: true
+links:
+- role: requirement-refinement
+  uid: /req/usage-constraints
+rationale: null
+text: |
+  The function shall not be used to test whether the spin lock is available. The
+  function waits until the spin lock is available and never returns
+  ${/c/errno/if/ebusy:/name}.
+type: constraint
