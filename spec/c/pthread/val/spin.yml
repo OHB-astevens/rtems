@@ -1,0 +1,153 @@
+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+copyrights:
+- Copyright (C) 2026 OHB System AG
+enabled-by: true
+links: []
+test-actions:
+- action-brief: |
+    Validate the initialization of a spin lock.
+  action-code: |
+    ISRLockSetPOSIX( &ctx->lock_ctx, &ctx->lock, false );
+  checks:
+  - brief: |
+      Validate ${../if/spin-init:/name}.
+    code: |
+      ${/score/isr/req/lock-initialize:/test-run}( &ctx->lock_ctx );
+    links:
+    - role: validation
+      uid: ../req/spin-init
+  - brief: |
+      Validate the ${../if/spin-init:/params[1]/name} parameter of
+      ${../if/spin-init:/name}.
+    code: |
+      ${../req/spin-init-pshared:/test-run}();
+    links:
+    - role: validation
+      uid: ../req/spin-init-pshared
+  links: []
+- action-brief: |
+    Validate the functions which acquire and release a spin lock.
+  action-code: |
+    ISRLockSetPOSIX( &ctx->lock_ctx, &ctx->lock, false );
+  checks:
+  - brief: |
+      Validate ${../if/spin-lock:/name}.
+    code: |
+      ${/score/isr/req/lock-acquire:/test-run}( &ctx->lock_ctx );
+    links:
+    - role: validation
+      uid: ../req/spin-lock
+  - brief: |
+      Validate ${../if/spin-unlock:/name}.
+    code: |
+      ${/score/isr/req/lock-release:/test-run}( &ctx->lock_ctx );
+    links:
+    - role: validation
+      uid: ../req/spin-unlock
+  links: []
+- action-brief: |
+    Validate the function which acquires a spin lock as ${../if/spin-lock:/name}
+    does.
+  action-code: |
+    ISRLockSetPOSIX( &ctx->lock_ctx, &ctx->lock, true );
+  checks:
+  - brief: |
+      Validate ${../if/spin-trylock:/name}.
+    code: |
+      ${/score/isr/req/lock-acquire:/test-run}( &ctx->lock_ctx );
+    links:
+    - role: validation
+      uid: ../req/spin-trylock
+  links: []
+- action-brief: |
+    Validate the function which destroys a spin lock.
+  action-code: |
+    ISRLockSetPOSIX( &ctx->lock_ctx, &ctx->lock, false );
+  checks:
+  - brief: |
+      Validate ${../if/spin-destroy:/name}.
+    code: |
+      ${/score/isr/req/lock-destroy:/test-run}( &ctx->lock_ctx );
+    links:
+    - role: validation
+      uid: ../req/spin-destroy
+  links: []
+- action-brief: |
+    Initialize a spin lock with ${../if/spin-init:/name}. Call each spin lock
+    function once.
+  action-code: |
+    int acquire_status;
+    int release_status;
+
+    T_eq_int( pthread_spin_init( &ctx->lock, PTHREAD_PROCESS_PRIVATE ), 0 );
+  checks:
+  - brief: |
+      Acquire the spin lock with ${../if/spin-lock:/name} and release it with
+      ${../if/spin-unlock:/name}. Check that ${../if/spin-lock:/name} returned zero.
+    code: |
+      acquire_status = pthread_spin_lock( &ctx->lock );
+      release_status = pthread_spin_unlock( &ctx->lock );
+      T_eq_int( acquire_status, 0 );
+    links:
+    - role: validation
+      uid: ../req/spin-lock-return
+  - brief: |
+      Check that ${../if/spin-unlock:/name} returned zero.
+    code: |
+      T_eq_int( release_status, 0 );
+    links:
+    - role: validation
+      uid: ../req/spin-unlock-return
+  - brief: |
+      Acquire the spin lock with ${../if/spin-trylock:/name} and release it with
+      ${../if/spin-unlock:/name}. Check that both functions returned zero.
+    code: |
+      acquire_status = pthread_spin_trylock( &ctx->lock );
+      release_status = pthread_spin_unlock( &ctx->lock );
+      T_eq_int( acquire_status, 0 );
+      T_eq_int( release_status, 0 );
+    links:
+    - role: validation
+      uid: ../req/spin-trylock-return
+    - role: validation
+      uid: ../req/spin-unlock-return
+  - brief: |
+      Destroy the spin lock. Check that ${../if/spin-destroy:/name} returned zero.
+    code: |
+      T_eq_int( pthread_spin_destroy( &ctx->lock ), 0 );
+    links:
+    - role: validation
+      uid: ../req/spin-destroy-return
+  links: []
+test-brief: |
+  Tests the spin lock functions.
+test-context:
+- brief: |
+    This member contains the context of the ISR lock test runs.
+  description: null
+  member: |
+    ISRLockContext lock_ctx
+- brief: |
+    This member contains the spin lock under test.
+  description: null
+  member: |
+    pthread_spinlock_t lock
+test-context-support: null
+test-description: null
+test-header: null
+test-includes:
+- pthread.h
+test-local-includes:
+- tr-isr-lock-acquire.h
+- tr-isr-lock-destroy.h
+- tr-isr-lock-initialize.h
+- tr-isr-lock-release.h
+- tr-pthread-spin-init-pshared.h
+- tx-isr-lock.h
+- tx-support.h
+test-setup: null
+test-stop: null
+test-support: null
+test-target: testsuites/validation/tc-pthread-spin.c
+test-teardown: null
+type: test-case

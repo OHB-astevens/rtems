@@ -1,0 +1,106 @@
+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+copyrights:
+- Copyright (C) 2026 OHB System AG
+enabled-by: true
+functional-type: action
+links:
+- role: interface-function
+  uid: ../if/spin-init
+- role: requirement-refinement
+  uid: ../../req/group-posix-api
+- role: reference
+  uid: /ref/std/posix-2024/pthread-spin-destroy
+post-conditions:
+- name: Status
+  states:
+  - name: Ok
+    test-code: |
+      T_eq_int( ctx->status, 0 );
+    text: |
+      The ${/glossary/returnvalue:/term} of ${../if/spin-init:/name} shall be zero.
+  test-epilogue: null
+  test-prologue: null
+pre-conditions:
+- name: Pshared
+  states:
+  - name: Private
+    test-code: |
+      ctx->pshared = PTHREAD_PROCESS_PRIVATE;
+    text: |
+      While the ${../if/spin-init:/params[1]/name} parameter is
+      ${../if/process-private:/name}.
+  - name: Shared
+    test-code: |
+      ctx->pshared = PTHREAD_PROCESS_SHARED;
+    text: |
+      While the ${../if/spin-init:/params[1]/name} parameter is
+      ${../if/process-shared:/name}.
+  - name: Invalid
+    test-code: |
+      ctx->pshared = PSHARED_INVALID;
+    text: |
+      While the ${../if/spin-init:/params[1]/name} parameter is not a valid
+      ${../glossary/process-shared:/term} value.
+  test-epilogue: null
+  test-prologue: null
+rationale: |
+  RTEMS ignores the ${../if/spin-init:/params[1]/name} parameter, so state
+  Invalid of pre-condition Pshared also returns zero. The standard defines no
+  error for such a value. The function allocates no resources and returns zero in
+  every case, so post-condition Status has a single state.
+
+  ${./spin-init:/spec} specifies the initialization of the spin lock for an
+  arbitrary and for a destroyed lock object, so the lock object is not a
+  dimension of this item.
+requirement-type: functional
+skip-reasons: {}
+test-action: |
+  ctx->status = pthread_spin_init( &ctx->lock, ctx->pshared );
+test-brief: null
+test-cleanup: |
+  T_eq_int( pthread_spin_destroy( &ctx->lock ), 0 );
+test-context:
+- brief: |
+    This member specifies the ${../if/spin-init:/params[1]/name} parameter value.
+  description: null
+  member: |
+    int pshared
+- brief: |
+    This member contains the return value of the ${../if/spin-init:/name} call.
+  description: null
+  member: |
+    int status
+- brief: |
+    This member contains the spin lock object.
+  description: null
+  member: |
+    pthread_spinlock_t lock
+test-context-support: null
+test-description: null
+test-header:
+  code: null
+  freestanding: false
+  includes: []
+  local-includes: []
+  run-params: []
+  target: testsuites/validation/tr-pthread-spin-init-pshared.h
+test-includes:
+- pthread.h
+test-local-includes:
+- tr-pthread-spin-init-pshared.h
+test-prepare: null
+test-setup: null
+test-stop: null
+test-support: |
+  #define PSHARED_INVALID 123
+test-target: testsuites/validation/tr-pthread-spin-init-pshared.c
+test-teardown: null
+text: |
+  ${.:text-template}
+transition-map:
+- enabled-by: true
+  post-conditions:
+    Status: Ok
+  pre-conditions:
+    Pshared: all
+type: requirement

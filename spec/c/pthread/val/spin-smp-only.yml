@@ -1,0 +1,76 @@
+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+copyrights:
+- Copyright (C) 2026 OHB System AG
+enabled-by: RTEMS_SMP
+links: []
+test-actions:
+- action-brief: |
+    Initialize a spin lock with ${../if/spin-init:/name}.
+  action-code: |
+    ISRLockSetPOSIX( &ctx->lock_ctx, &ctx->lock, false );
+    T_eq_int( pthread_spin_init( &ctx->lock, PTHREAD_PROCESS_PRIVATE ), 0 );
+  checks:
+  - brief: |
+      Check that no processor owns the spin lock after the initialization.
+    code: |
+      T_true( ISRLockIsFree( &ctx->lock_ctx ) );
+    links:
+    - role: validation
+      uid: ../req/spin-init
+  - brief: |
+      Destroy the spin lock.
+    code: |
+      T_eq_int( pthread_spin_destroy( &ctx->lock ), 0 );
+    links: []
+  links: []
+- action-brief: |
+    Validate the order in which processors acquire a spin lock.
+  action-code: |
+    ISRLockSetPOSIX( &ctx->lock_ctx, &ctx->lock, false );
+  checks:
+  - brief: |
+      Validate the order where the processors acquire the spin lock with
+      ${../if/spin-lock:/name}.
+    code: |
+      ${/score/isr/req/lock-fifo:/test-run}( &ctx->lock_ctx );
+    links:
+    - role: validation
+      uid: ../req/spin-unlock-fifo
+  - brief: |
+      Validate the order where the processors acquire the spin lock with
+      ${../if/spin-trylock:/name}.
+    code: |
+      ISRLockSetPOSIX( &ctx->lock_ctx, &ctx->lock, true );
+      ${/score/isr/req/lock-fifo:/test-run}( &ctx->lock_ctx );
+    links:
+    - role: validation
+      uid: ../req/spin-unlock-fifo
+  links: []
+test-brief: |
+  Tests the spin lock functions in SMP configurations.
+test-context:
+- brief: |
+    This member contains the context of the ISR lock test runs.
+  description: null
+  member: |
+    ISRLockContext lock_ctx
+- brief: |
+    This member contains the spin lock under test.
+  description: null
+  member: |
+    pthread_spinlock_t lock
+test-context-support: null
+test-description: null
+test-header: null
+test-includes:
+- pthread.h
+test-local-includes:
+- tr-isr-lock-fifo.h
+- tx-isr-lock.h
+- tx-support.h
+test-setup: null
+test-stop: null
+test-support: null
+test-target: testsuites/validation/tc-pthread-spin-smp-only.c
+test-teardown: null
+type: test-case

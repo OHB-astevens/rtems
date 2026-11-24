@@ -1,0 +1,13 @@
+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+copyrights:
+- Copyright (C) 2026 OHB System AG
+enabled-by: true
+functional-type: function
+links:
+- role: interface-function
+  uid: ../if/spin-destroy
+rationale: null
+requirement-type: functional
+text: |
+  The ${../if/spin-destroy:/name} function shall return zero.
+type: requirement
