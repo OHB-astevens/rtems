@@ -1,0 +1,13 @@
+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+copyrights:
+- Copyright (C) 2026 OHB System AG
+enabled-by: true
+functional-type: function
+links:
+- role: interface-function
+  uid: ../if/spin-unlock
+rationale: null
+requirement-type: functional
+text: |
+  The ${../if/spin-unlock:/name} function shall return zero.
+type: requirement
