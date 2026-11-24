@@ -46,6 +46,7 @@
  * @defgroup ScoreIsrReqLockDestroy spec:/score/isr/req/lock-destroy
  *
  * @ingroup TestsuitesValidationIntr
+ * @ingroup TestsuitesValidationNoClock1
  *
  * @{
  */
