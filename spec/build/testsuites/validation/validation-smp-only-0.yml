@@ -20,6 +20,7 @@ links: []
 source:
 - testsuites/validation/tc-acfg-scheduler-edf-smp.c
 - testsuites/validation/tc-intr-smp-only.c
+- testsuites/validation/tc-pthread-spin-smp-only.c
 - testsuites/validation/tc-ratemon-timeout-smp.c
 - testsuites/validation/tc-sched-smp-edf-set-affinity.c
 - testsuites/validation/tc-sched-smp-edf.c

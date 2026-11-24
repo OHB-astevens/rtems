@@ -44,6 +44,7 @@
  * @defgroup ScoreIsrReqLockAcquire spec:/score/isr/req/lock-acquire
  *
  * @ingroup TestsuitesValidationIntr
+ * @ingroup TestsuitesValidationNoClock1
  *
  * @{
  */

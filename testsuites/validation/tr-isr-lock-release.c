@@ -44,6 +44,7 @@
  * @defgroup ScoreIsrReqLockRelease spec:/score/isr/req/lock-release
  *
  * @ingroup TestsuitesValidationIntr
+ * @ingroup TestsuitesValidationNoClock1
  *
  * @{
  */
