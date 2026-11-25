@@ -110,12 +110,6 @@ static void barrier( test_context *ctx, SMP_barrier_State *bs )
   _SMP_barrier_Wait( &ctx->barrier, bs, 2 );
 }
 
-static void barrier_and_delay( test_context *ctx, SMP_barrier_State *bs )
-{
-  barrier( ctx, bs );
-  busy_wait();
-}
-
 static rtems_task_priority get_prio( rtems_id task_id )
 {
   rtems_status_code   sc;
@@ -152,6 +146,34 @@ static void assert_executing_worker( test_context *ctx )
   rtems_test_assert(
     _CPU_Context_Get_is_executing( &ctx->worker_task->Registers )
   );
+}
+
+static bool is_sticky_waiting( rtems_id id )
+{
+  Thread_Control  *the_thread;
+  ISR_lock_Context lock_context;
+  bool             sticky_waiting;
+
+  the_thread = _Thread_Get( id, &lock_context );
+  rtems_test_assert( the_thread != NULL );
+  _Thread_State_acquire_critical( the_thread, &lock_context );
+  sticky_waiting =
+    the_thread->Wait.queue != NULL &&
+    _Thread_Scheduler_get_home_node( the_thread )->sticky_level > 0;
+  _Thread_State_release( the_thread, &lock_context );
+
+  return sticky_waiting;
+}
+
+/*
+ * A worker which waits for a MrsP semaphore keeps its scheduler node only
+ * after the enqueue made the node sticky.
+ */
+static void wait_for_sticky_worker( test_context *ctx )
+{
+  while ( !is_sticky_waiting( ctx->worker_ids[ 0 ] ) ) {
+    /* Wait */
+  }
 }
 
 static void switch_extension( Thread_Control *executing, Thread_Control *heir )
@@ -322,7 +344,7 @@ static void obtain_and_release_worker( rtems_task_argument arg )
   /* Obtain with timeout (A) */
   barrier( ctx, &barrier_state );
 
-  sc = rtems_semaphore_obtain( ctx->mrsp_ids[ 0 ], RTEMS_WAIT, 4 );
+  sc = rtems_semaphore_obtain( ctx->mrsp_ids[ 0 ], RTEMS_WAIT, 100 );
   rtems_test_assert( sc == RTEMS_TIMEOUT );
 
   assert_prio( RTEMS_SELF, 4 );
@@ -330,7 +352,7 @@ static void obtain_and_release_worker( rtems_task_argument arg )
   /* Obtain with priority change and timeout (B) */
   barrier( ctx, &barrier_state );
 
-  sc = rtems_semaphore_obtain( ctx->mrsp_ids[ 0 ], RTEMS_WAIT, 4 );
+  sc = rtems_semaphore_obtain( ctx->mrsp_ids[ 0 ], RTEMS_WAIT, 100 );
   rtems_test_assert( sc == RTEMS_TIMEOUT );
 
   assert_prio( RTEMS_SELF, 2 );
@@ -358,7 +380,7 @@ static void obtain_and_release_worker( rtems_task_argument arg )
   /* Obtain and help with timeout (E) */
   barrier( ctx, &barrier_state );
 
-  sc = rtems_semaphore_obtain( ctx->mrsp_ids[ 0 ], RTEMS_WAIT, 4 );
+  sc = rtems_semaphore_obtain( ctx->mrsp_ids[ 0 ], RTEMS_WAIT, 100 );
   rtems_test_assert( sc == RTEMS_TIMEOUT );
 
   assert_prio( RTEMS_SELF, 4 );
@@ -494,13 +516,15 @@ static void test_mrsp_obtain_and_release( test_context *ctx )
   rtems_test_assert( sc == RTEMS_SUCCESSFUL );
 
   /* Obtain with timeout (A) */
-  barrier_and_delay( ctx, &barrier_state );
+  barrier( ctx, &barrier_state );
+  wait_for_sticky_worker( ctx );
 
   assert_prio( ctx->worker_ids[ 0 ], 3 );
   assert_executing_worker( ctx );
 
   /* Obtain with priority change and timeout (B) */
-  barrier_and_delay( ctx, &barrier_state );
+  barrier( ctx, &barrier_state );
+  wait_for_sticky_worker( ctx );
 
   assert_prio( ctx->worker_ids[ 0 ], 3 );
   change_prio( ctx->worker_ids[ 0 ], 2 );
@@ -513,7 +537,8 @@ static void test_mrsp_obtain_and_release( test_context *ctx )
   change_prio( ctx->worker_ids[ 0 ], 4 );
 
   /* Obtain without timeout (D) */
-  barrier_and_delay( ctx, &barrier_state );
+  barrier( ctx, &barrier_state );
+  wait_for_sticky_worker( ctx );
 
   assert_prio( ctx->worker_ids[ 0 ], 3 );
   assert_executing_worker( ctx );
@@ -531,7 +556,8 @@ static void test_mrsp_obtain_and_release( test_context *ctx )
   rtems_test_assert( sc == RTEMS_SUCCESSFUL );
 
   /* Obtain and help with timeout (E) */
-  barrier_and_delay( ctx, &barrier_state );
+  barrier( ctx, &barrier_state );
+  wait_for_sticky_worker( ctx );
 
   sc = rtems_task_start(
     ctx->high_task_id[ 0 ],
@@ -847,13 +873,35 @@ static void test_mrsp_nested_obtain_error( test_context *ctx )
   rtems_test_assert( sc == RTEMS_SUCCESSFUL );
 }
 
+static bool is_waiting( rtems_id id )
+{
+  Thread_Control  *the_thread;
+  ISR_lock_Context lock_context;
+  bool             waiting;
+
+  the_thread = _Thread_Get( id, &lock_context );
+  rtems_test_assert( the_thread != NULL );
+  waiting = the_thread->Wait.queue != NULL;
+  _ISR_lock_ISR_enable( &lock_context );
+
+  return waiting;
+}
+
 static void deadlock_timer( rtems_id timer_id, void *arg )
 {
   (void) timer_id;
 
   test_context *ctx = arg;
 
-  change_prio( ctx->main_task_id, 1 );
+  /*
+   * The main task detects the deadlock only after the worker waits for the
+   * first semaphore.
+   */
+  if ( is_waiting( ctx->worker_ids[ 0 ] ) ) {
+    change_prio( ctx->main_task_id, 1 );
+  } else {
+    fire_timer( ctx, 1, deadlock_timer );
+  }
 }
 
 static void deadlock_worker( rtems_task_argument arg )
@@ -1146,12 +1194,27 @@ static void unblock_ready_owner( test_context *ctx )
   rtems_test_assert( !ctx->high_run[ 0 ] );
 }
 
+/*
+ * The main task resumes the rival after it fires one of the timers below.  A
+ * timer helps the main task only after this resume.
+ */
+static bool is_rival_suspended( const test_context *ctx )
+{
+  return rtems_task_is_suspended( ctx->high_task_id[ 1 ] ) ==
+         RTEMS_ALREADY_SUSPENDED;
+}
+
 static void unblock_owner_before_rival_timer( rtems_id timer_id, void *arg )
 {
   (void) timer_id;
 
   test_context     *ctx = arg;
   rtems_status_code sc;
+
+  if ( is_rival_suspended( ctx ) ) {
+    fire_timer( ctx, 1, unblock_owner_before_rival_timer );
+    return;
+  }
 
   sc = rtems_task_suspend( ctx->high_task_id[ 0 ] );
   rtems_test_assert( sc == RTEMS_SUCCESSFUL );
@@ -1167,6 +1230,11 @@ static void unblock_owner_after_rival_timer( rtems_id timer_id, void *arg )
   test_context     *ctx = arg;
   rtems_status_code sc;
 
+  if ( is_rival_suspended( ctx ) ) {
+    fire_timer( ctx, 1, unblock_owner_after_rival_timer );
+    return;
+  }
+
   sc = rtems_task_suspend( ctx->high_task_id[ 1 ] );
   rtems_test_assert( sc == RTEMS_SUCCESSFUL );
 
@@ -1180,7 +1248,8 @@ static void various_block_unblock( test_context *ctx )
   SMP_barrier_State barrier_state = SMP_BARRIER_STATE_INITIALIZER;
 
   /* Worker obtain (F) */
-  barrier_and_delay( ctx, &barrier_state );
+  barrier( ctx, &barrier_state );
+  wait_for_sticky_worker( ctx );
 
   sc = rtems_task_suspend( ctx->worker_ids[ 0 ] );
   rtems_test_assert( sc == RTEMS_SUCCESSFUL );
@@ -1257,6 +1326,13 @@ static void various_block_unblock( test_context *ctx )
   /* This will take the processor away from us, the timer will help later */
   sc = rtems_task_resume( ctx->high_task_id[ 1 ] );
   rtems_test_assert( sc == RTEMS_SUCCESSFUL );
+
+  /*
+   * The release lets the home scheduler run a low task until the thread
+   * dispatch moves us back to our home processor.
+   */
+  rtems_test_assert( !ctx->low_run[ 0 ] );
+  rtems_test_assert( !ctx->low_run[ 1 ] );
 
   sc = rtems_semaphore_release( ctx->mrsp_ids[ 0 ] );
   rtems_test_assert( sc == RTEMS_SUCCESSFUL );
@@ -1372,9 +1448,6 @@ static void test_mrsp_various_block_and_unblock( test_context *ctx )
 
   unblock_ready_owner( ctx );
   various_block_unblock( ctx );
-
-  rtems_test_assert( !ctx->low_run[ 0 ] );
-  rtems_test_assert( !ctx->low_run[ 1 ] );
 
   print_switch_events( ctx );
   delete_timer( ctx );
