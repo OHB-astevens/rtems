@@ -39,22 +39,42 @@
 static ssize_t IntUartPollWrite(int minor, const char *buf, size_t len);
 static ssize_t IntUartInterruptWrite (int minor, const char *buf, size_t len);
 
-static void
-_BSP_null_char( char c )
+static int
+_BSP_null_char( int c )
 {
     int level;
+    bool try_only;
+
+    if ( rtems_output_char_is_drain( c ) ) {
+        return -1;
+    }
+
+    try_only = rtems_output_char_is_try( c );
+    c &= RTEMS_OUTPUT_CHAR_MASK;
 
     rtems_interrupt_disable(level);
+    if (
+        try_only &&
+        (MCF5282_UART_USR(CONSOLE_PORT) & MCF5282_UART_USR_TXRDY) == 0
+    ) {
+        rtems_interrupt_enable(level);
+        return -1;
+    }
+
     while ( (MCF5282_UART_USR(CONSOLE_PORT) & MCF5282_UART_USR_TXRDY) == 0 )
     {
         continue;
     }
     MCF5282_UART_UTB(CONSOLE_PORT) = c;
-    while ( (MCF5282_UART_USR(CONSOLE_PORT) & MCF5282_UART_USR_TXRDY) == 0 )
-    {
-        continue;
+    if ( !try_only ) {
+        while ( (MCF5282_UART_USR(CONSOLE_PORT) & MCF5282_UART_USR_TXRDY) == 0 )
+        {
+            continue;
+        }
     }
     rtems_interrupt_enable(level);
+
+    return 0;
 }
 
 BSP_polling_getchar_function_type       BSP_poll_char = NULL;

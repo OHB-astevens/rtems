@@ -103,12 +103,12 @@ void versal_debug_console_flush(void)
   );
 }
 
-static void versal_debug_console_out(char c)
+static int versal_debug_console_out(int c)
 {
   rtems_termios_device_context *base =
     &versal_uart_instances[BSP_CONSOLE_MINOR].pl011_ctx.base;
 
-  arm_pl011_write_polled(base, c);
+  return arm_pl011_output_char_polled(base, c);
 }
 
 static void versal_debug_console_init(void)
@@ -120,14 +120,15 @@ static void versal_debug_console_init(void)
   BSP_output_char = versal_debug_console_out;
 }
 
-static void versal_debug_console_early_init(char c)
+static int versal_debug_console_early_init(int c)
 {
   rtems_termios_device_context *base =
     &versal_uart_instances[BSP_CONSOLE_MINOR].pl011_ctx.base;
 
+
   (void) versal_uart_initialize(base);
   BSP_output_char = versal_debug_console_out;
-  versal_debug_console_out(c);
+  return versal_debug_console_out(c);
 }
 
 static int versal_debug_console_in(void)
