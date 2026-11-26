@@ -128,10 +128,11 @@ rtems_status_code console_initialize(
   return RTEMS_SUCCESSFUL;
 }
 
-static void output_char(char c)
+static int output_char(int c)
 {
   rtems_termios_device_context *ctx = &rk3399_uart_instances[BSP_CONSOLE_MINOR].base;
-  ns16550_polled_putchar(ctx, c);
+
+  return ns16550_polled_output_char(ctx, c);
 }
 
 BSP_output_char_function_type BSP_output_char = output_char;

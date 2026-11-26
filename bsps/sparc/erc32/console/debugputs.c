@@ -85,9 +85,24 @@ int console_inbyte_nonblocking( int port )
 
 #include <rtems/bspIo.h>
 
-static void BSP_output_char_f( char c )
+static int BSP_output_char_f( int c )
 {
+  if ( rtems_output_char_is_drain( c ) ) {
+    return -1;
+  }
+
+  if (
+    rtems_output_char_is_try( c ) &&
+    ( ERC32_MEC.UART_Status & ERC32_MEC_UART_STATUS_THEA ) == 0
+  ) {
+    return -1;
+  }
+
+  c &= RTEMS_OUTPUT_CHAR_MASK;
+
   console_outbyte_polled( 0, c );
+
+  return 0;
 }
 
 BSP_output_char_function_type     BSP_output_char = BSP_output_char_f;

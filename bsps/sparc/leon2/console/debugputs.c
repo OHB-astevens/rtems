@@ -57,9 +57,24 @@ int console_inbyte_nonblocking( int port )
   return (int) LEON_REG.UART_Channel_2;
 }
 
-static void bsp_out_char( char c )
+static int bsp_out_char( int c )
 {
+  if ( rtems_output_char_is_drain( c ) ) {
+    return -1;
+  }
+
+  if (
+    rtems_output_char_is_try( c ) &&
+    ( LEON_REG.UART_Status_1 & LEON_REG_UART_STATUS_THE ) == 0
+  ) {
+    return -1;
+  }
+
+  c &= RTEMS_OUTPUT_CHAR_MASK;
+
   console_outbyte_polled( 0, c );
+
+  return 0;
 }
 
 BSP_output_char_function_type BSP_output_char = bsp_out_char;

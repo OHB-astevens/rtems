@@ -108,11 +108,11 @@ const console_device console_device_table[] = {
 
 const size_t console_device_count = RTEMS_ARRAY_SIZE(console_device_table);
 
-static void gen83xx_output_char(char c)
+static int gen83xx_output_char(int c)
 {
   rtems_termios_device_context *ctx = console_device_table[0].context;
 
-  ns16550_polled_putchar(ctx, c);
+  return ns16550_polled_output_char(ctx, c);
 }
 
 BSP_output_char_function_type BSP_output_char = gen83xx_output_char;

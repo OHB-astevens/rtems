@@ -57,13 +57,25 @@
  *
  * The debug console always uses SCI device 0.
  */
-static void tms570_debug_console_out(char ch)
+static int tms570_debug_console_out(int ch)
 {
   tms570_sci_context *ctx = TMS570_CONSOLE;
   volatile tms570_sci_t *regs = ctx->regs;
+  bool try_only;
+
+  if ( rtems_output_char_is_drain( ch ) ) {
+    return -1;
+  }
+
+  try_only = rtems_output_char_is_try( ch );
+  ch &= RTEMS_OUTPUT_CHAR_MASK;
 
   while ( true ) {
     rtems_interrupt_level level;
+
+    if ( try_only && ( regs->FLR & TMS570_SCI_FLR_TXRDY ) == 0 ) {
+      return -1;
+    }
 
     while ( ( regs->FLR & TMS570_SCI_FLR_TXRDY ) == 0 ) {
       /* Wait */
@@ -80,6 +92,8 @@ static void tms570_debug_console_out(char ch)
 
     rtems_interrupt_enable( level );
   }
+
+  return 0;
 }
 
 static void tms570_debug_console_init(void)
@@ -95,10 +109,10 @@ static void tms570_debug_console_init(void)
   BSP_output_char = tms570_debug_console_out;
 }
 
-static void tms570_debug_console_early_init(char c)
+static int tms570_debug_console_early_init(int c)
 {
   tms570_debug_console_init();
-  tms570_debug_console_out(c);
+  return tms570_debug_console_out(c);
 }
 
 /**

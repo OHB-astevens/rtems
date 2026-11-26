@@ -152,9 +152,25 @@ static int imx93_uart_read_polled( rtems_termios_device_context *base )
   }
 }
 
-static void imx93_output_char( char c )
+static int imx93_output_char( int c )
 {
+  if ( rtems_output_char_is_drain( c ) ) {
+    return -1;
+  }
+
+  if (
+    rtems_output_char_is_try( c ) &&
+    ( imx93_uart_get_regs( &imx93_uart_console->base )->STAT &
+      UARTSTAT_TDRE ) == 0
+  ) {
+    return -1;
+  }
+
+  c &= RTEMS_OUTPUT_CHAR_MASK;
+
   imx93_poll_write( &imx93_uart_console->base, c );
+
+  return 0;
 }
 
 static int imx93_poll_char( void )

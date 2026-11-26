@@ -42,8 +42,12 @@
 
 static uint32_t mblaze_uart_base = 0;
 
-static void output_char( char c )
+static int output_char( int c )
 {
+  if ( rtems_output_char_is_drain( c ) ) {
+    return -1;
+  }
+
   if (mblaze_uart_base == 0 ) {
     mblaze_uart_base = try_get_prop_from_device_tree(
       "xlnx,xps-uartlite-1.00.a",
@@ -52,11 +56,22 @@ static void output_char( char c )
     );
   }
 
+  if (
+    rtems_output_char_is_try( c ) &&
+    XUartLite_IsTransmitFull( mblaze_uart_base )
+  ) {
+    return -1;
+  }
+
+  c &= RTEMS_OUTPUT_CHAR_MASK;
+
   /*
    * Send exactly the character.  rtems_putc() already emits the carriage
    * return of a line feed, so a translation here would double it.
    */
   XUartLite_SendByte( mblaze_uart_base, c );
+
+  return 0;
 }
 
 static int xUartLite_RecvByte( int minor )

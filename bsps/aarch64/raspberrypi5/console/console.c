@@ -52,8 +52,8 @@ static arm_pl011_context rpi5_uart_debug_context = {
   .clock = BSP_PL011_CLOCK_FREQ
 };
 
-static void output_char (char c) {
-  arm_pl011_write_polled(&rpi5_uart_debug_context.base, c);
+static int output_char (int c) {
+  return arm_pl011_output_char_polled(&rpi5_uart_debug_context.base, c);
 }
 
 static int poll_char (void) {
