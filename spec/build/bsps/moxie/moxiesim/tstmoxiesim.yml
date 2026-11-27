@@ -53,6 +53,7 @@ actions:
     - sptls01
     - sptls02
     - sptls04
+    - sptls05
     - stackchk01
     - terminate
     - tftpfs

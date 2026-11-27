@@ -3,14 +3,14 @@
 /**
  * @file
  *
- * @ingroup RTEMSScoreWorkspace
+ * @ingroup RTEMSImplClassicRegion
  *
- * @brief This source file contains the _Workspace_Handler_initialization()
- *   implementation which supports exactly one memory area.
+ * @brief This source file contains the implementation of
+ *   rtems_region_get_statistics().
  */
 
 /*
- * Copyright (C) 2020 embedded brains GmbH & Co. KG
+ * Copyright (C) 2026 embedded brains GmbH & Co. KG
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,9 +38,28 @@
 #include "config.h"
 #endif
 
-#include <rtems/score/wkspaceinitone.h>
+#include <rtems/rtems/regionimpl.h>
+#include <rtems/rtems/supportimpl.h>
 
-void _Workspace_Handler_initialization( void )
+rtems_status_code rtems_region_get_statistics(
+  rtems_id               id,
+  rtems_heap_statistics *stats
+)
 {
-  _Workspace_Initialize_for_one_area();
+  Region_Control *the_region;
+
+  if ( stats == NULL ) {
+    return RTEMS_INVALID_ADDRESS;
+  }
+
+  the_region = _Region_Get_and_lock( id );
+
+  if ( the_region == NULL ) {
+    return RTEMS_INVALID_ID;
+  }
+
+  _RTEMS_Get_heap_statistics( &the_region->Memory, stats );
+
+  _Region_Unlock( the_region );
+  return RTEMS_SUCCESSFUL;
 }

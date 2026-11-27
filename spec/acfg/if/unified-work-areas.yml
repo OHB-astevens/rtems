@@ -2,12 +2,14 @@ SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 appl-config-option-type: feature
 copyrights:
 - Copyright (C) 1988, 2008 On-Line Applications Research Corporation (OAR)
+- Copyright (C) 2026 embedded brains GmbH & Co. KG
 default: |
-  If this configuration option is undefined, then there will be separate memory
-  pools for the RTEMS Workspace and C Program Heap.
+  If this configuration option is undefined, then the RTEMS Workspace allocates
+  from the C Program Heap only if an object class uses
+  ${/ref/rtems/c-user/config-unlimited-objects:/name}.
 description: |
-  In case this configuration option is defined, then the RTEMS Workspace and the
-  C Program Heap will be one pool of memory.
+  In case this configuration option is defined, then the RTEMS Workspace
+  allocates from the C Program Heap if its storage area is exhausted.
 enabled-by: true
 index-entries:
 - unified work areas
@@ -26,13 +28,8 @@ links:
   uid: /ref/rtems/c-user/config-unlimited-objects
 name: CONFIGURE_UNIFIED_WORK_AREAS
 notes: |
-  Having separate pools does have some advantages in the event a task blows a
-  stack or writes outside its memory area. However, in low memory systems the
-  overhead of the two pools plus the potential for unused memory in either pool
-  is very undesirable.
-
-  In high memory environments, this is desirable when you want to use the
-  ${/ref/rtems/c-user/config-unlimited-objects:/name} option. You will be able to
-  create objects until you run out of all available memory rather then just until
-  you run out of RTEMS Workspace.
+  The application configuration defines the storage area of the RTEMS Workspace
+  as a statically allocated array. The size of the array covers the configured
+  objects and task stacks. Objects which an unlimited object class allocates
+  beyond its initial allocation come from the C Program Heap.
 type: interface

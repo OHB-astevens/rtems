@@ -1,0 +1,50 @@
+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+brief: |
+  Gets the statistics of the RTEMS Workspace.
+copyrights:
+- Copyright (C) 2026 embedded brains GmbH & Co. KG
+definition:
+  default:
+    attributes: null
+    body: null
+    params:
+    - ${heap-statistics:/name} *${.:/params[0]/name}
+    return: ${/c/if/bool:/name}
+  variants: []
+description: null
+enabled-by: true
+index-entries: []
+interface-type: function
+links:
+- role: interface-placement
+  uid: ../../support/if/header
+- role: interface-ingroup
+  uid: group
+- role: constraint
+  uid: /constraint/directive-not-pre-qualified
+- role: constraint
+  uid: /constraint/directive-ctx-devinit
+- role: constraint
+  uid: /constraint/directive-ctx-task
+- role: constraint
+  uid: /constraint/object-allocator
+name: rtems_workspace_get_statistics
+notes: |
+  The directive visits the free blocks of the RTEMS Workspace to get the size of
+  the largest free block, so its execution time depends on the number of free
+  blocks.
+
+  The RTEMS Workspace provides no resize operation, so the directive sets the
+  `resizes` member to zero.
+params:
+- description: |
+    is the pointer to an ${heap-statistics:/name} object. When the directive call
+    is successful, the statistics of the RTEMS Workspace will be stored in this
+    object.
+  dir: out
+  name: stats
+return:
+  return: |
+    Returns true, if getting the statistics was successful, otherwise false.
+  return-values: []
+type: interface

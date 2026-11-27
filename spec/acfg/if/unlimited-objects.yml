@@ -2,6 +2,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 appl-config-option-type: feature-enable
 copyrights:
 - Copyright (C) 1988, 2008 On-Line Applications Research Corporation (OAR)
+- Copyright (C) 2026 embedded brains GmbH & Co. KG
 description: |
   In case this configuration option is defined, then unlimited objects are used
   by default.
@@ -17,9 +18,8 @@ links:
   uid: ../constraint/option-not-pre-qualified
 name: CONFIGURE_UNLIMITED_OBJECTS
 notes: |
-  When using unlimited objects, it is common practice to also specify
-  ${unified-work-areas:/name} so the system operates with a single pool of memory
-  for both RTEMS Workspace and C Program Heap.
+  If an object class uses unlimited objects, then the RTEMS Workspace allocates
+  from the C Program Heap if its storage area is exhausted.
 
   This option does not override an explicit configuration for a particular object
   class by the user.

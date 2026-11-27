@@ -1,6 +1,6 @@
 SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 copyrights:
-- Copyright (C) 2021 embedded brains GmbH & Co. KG
+- Copyright (C) 2021, 2026 embedded brains GmbH & Co. KG
 enabled-by: false
 functional-type: function
 links:
@@ -11,6 +11,6 @@ links:
 rationale: null
 requirement-type: functional
 text: |
-  The application configuration option shall enable one pool of memory for the
-  RTEMS Workspace and the C Program Heap.
+  The application configuration option shall enable the RTEMS Workspace to
+  allocate from the C Program Heap if its storage area is exhausted.
 type: requirement

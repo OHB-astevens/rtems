@@ -2,7 +2,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 brief: |
   Greedy allocates that empties the RTEMS Workspace.
 copyrights:
-- Copyright (C) 2021 embedded brains GmbH & Co. KG
+- Copyright (C) 2021, 2026 embedded brains GmbH & Co. KG
 - Copyright (C) 1988, 2008 On-Line Applications Research Corporation (OAR)
 definition:
   default:
@@ -28,7 +28,9 @@ links:
 - role: constraint
   uid: /constraint/directive-not-pre-qualified
 name: rtems_workspace_greedy_allocate
-notes: null
+notes: |
+  If the RTEMS Workspace allocates from the C Program Heap when its storage area
+  is exhausted, then the directive also uses all blocks of the C Program Heap.
 params:
 - description: |
     is the array of block sizes.

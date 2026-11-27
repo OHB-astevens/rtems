@@ -3,14 +3,14 @@
 /**
  * @file
  *
- * @ingroup RTEMSScoreWorkspace
+ * @ingroup RTEMSImplClassicSupport
  *
- * @brief This source file contains the implementation of
- *   _Workspace_Malloc_initialize_unified().
+ * @brief This header file provides the implementation interfaces of
+ *   the @ref RTEMSImplClassicSupport.
  */
 
 /*
- * Copyright (C) 2020 embedded brains GmbH & Co. KG
+ * Copyright (C) 2026 embedded brains GmbH & Co. KG
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,14 +34,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#ifndef _RTEMS_RTEMS_SUPPORTIMPL_H
+#define _RTEMS_RTEMS_SUPPORTIMPL_H
+
+#include <rtems/rtems/support.h>
+#include <rtems/score/heap.h>
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#include <rtems/score/wkspacedata.h>
-#include <rtems/score/wkspace.h>
+/**
+ * @defgroup RTEMSImplClassicSupport Support Services
+ *
+ * @ingroup RTEMSImplClassic
+ *
+ * @brief This group contains the Support Services implementation.
+ *
+ * @{
+ */
 
-Heap_Control *_Workspace_Malloc_initialize_unified( void )
-{
-  return &_Workspace_Area;
+/**
+ * @brief Gets the statistics of the heap.
+ *
+ * The function frees the blocks which the heap protection delays, so that the
+ * statistics count them as free blocks.  It visits each free block to get the
+ * size of the largest free block.
+ *
+ * The caller shall own the lock which protects the heap.
+ *
+ * @param[in, out] heap is the heap.
+ *
+ * @param[out] stats is the statistics of the heap.
+ */
+void _RTEMS_Get_heap_statistics(
+  Heap_Control          *heap,
+  rtems_heap_statistics *stats
+);
+
+/** @} */
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* _RTEMS_RTEMS_SUPPORTIMPL_H */
