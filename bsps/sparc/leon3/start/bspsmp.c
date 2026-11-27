@@ -39,7 +39,6 @@
 #include <bsp/fatal.h>
 #include <bsp/irq-generic.h>
 #include <bsp/leon3.h>
-#include <rtems/bspIo.h>
 #include <rtems/sysinit.h>
 #include <rtems/score/assert.h>
 #include <rtems/score/smpimpl.h>
@@ -102,10 +101,6 @@ uint32_t _CPU_SMP_Initialize( void )
 
 bool _CPU_SMP_Start_processor( uint32_t cpu_index )
 {
-  #if defined( RTEMS_DEBUG )
-  printk( "Waking CPU %d\n", cpu_index );
-  #endif
-
   grlib_store_32(
     &LEON3_IrqCtrl_Regs->mpstat,
     IRQAMP_MPSTAT_STATUS( 1U << cpu_index )
