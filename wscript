@@ -41,6 +41,16 @@ except:
 
 from waflib.Errors import WafError
 from waflib.TaskGen import after, before_method, feature
+from waflib.Tools import c as waf_c, cxx as waf_cxx
+
+# GCC applies -fprofile-prefix-path and -fprofile-dir to the name of the
+# .gcda file only for a relative object path.
+for _task in [waf_c.c, waf_cxx.cxx]:
+    type(
+        _task.__name__, (_task, ), {
+            "run_str":
+            _task.orig_run_str.replace("${TGT[0].abspath()}", "${TGT}")
+        })
 
 version = {
     "__RTEMS_MAJOR__": "7",  # version
@@ -425,8 +435,9 @@ class Item(object):
             def run(self):
                 cmd = [self.cmd]
                 cmd.extend(self.env.LINKFLAGS)
-                cmd.extend([i.abspath() for i in self.inputs])
-                cmd.append("-o" + self.outputs[0].abspath())
+                cwd = self.get_cwd()
+                cmd.extend([i.path_from(cwd) for i in self.inputs])
+                cmd.append("-o" + self.outputs[0].path_from(cwd))
                 cmd.append("-L.")
                 cmd.extend(["-l" + l for l in self.stlib])
                 cmd.extend(["-l" + l for l in self.use])
@@ -502,9 +513,9 @@ class Item(object):
                 cmd.extend(["-l" + l for l in self.use])
                 cmd.extend(self.env.LDFLAGS)
                 cmd.extend(["-margs", "-a"])
-                cmd.append(self.main.abspath())
+                cmd.append(self.main.path_from(cwd))
                 cmd.append("-o")
-                cmd.append(self.outputs[0].abspath())
+                cmd.append(self.outputs[0].path_from(cwd))
                 return self.exec_command(cmd)
 
             def scan(self):
@@ -541,18 +552,35 @@ class Item(object):
 
         def run(task):
             import tarfile
+            import tempfile
 
+            cwd = task.get_cwd()
             tar = tarfile.TarFile(task.outputs[0].abspath(),
                                   "w",
                                   format=tarfile.USTAR_FORMAT)
             srcpath = bld.path.abspath() + "/"
             bldpath = bld.bldnode.abspath() + "/"
-            for src in task.inputs:
-                src = src.abspath()
-                dst = src
-                for r in remove:
-                    dst = src.replace(srcpath + r, "").replace(bldpath + r, "")
-                tar.add(src, dst, filter=make_tar_info_reproducible)
+            with tempfile.TemporaryDirectory(
+                    dir=task.outputs[0].parent.abspath()) as tmp:
+                for node in task.inputs:
+                    src = node.abspath()
+                    dst = src
+                    for r in remove:
+                        dst = src.replace(srcpath + r,
+                                          "").replace(bldpath + r, "")
+                    if src.endswith(".o") or src.endswith(".a"):
+                        # The dynamic loader uses no debug information.
+                        stripped = os.path.join(tmp, os.path.basename(src))
+                        status = task.exec_command([
+                            bld.env.OBJCOPY[0], "--strip-debug",
+                            "--enable-deterministic-archives",
+                            node.path_from(cwd),
+                            os.path.relpath(stripped, cwd.abspath())
+                        ])
+                        if status != 0:
+                            return status
+                        src = stripped
+                    tar.add(src, dst, filter=make_tar_info_reproducible)
             tar.close()
             return 0
 
@@ -573,8 +601,9 @@ class Item(object):
             cmd = [bld.env.BIN2C[0]]
             if name is not None:
                 cmd.extend(["-N", name])
-            cmd.append(task.inputs[0].abspath())
-            cmd.append(task.outputs[0].abspath())
+            cwd = task.get_cwd()
+            cmd.append(task.inputs[0].path_from(cwd))
+            cmd.append(task.outputs[0].path_from(cwd))
             return task.exec_command(cmd)
 
         path, base = os.path.split(source)
@@ -597,6 +626,7 @@ class Item(object):
     def rtems_rap(self, bld, base, objects, libs, target):
 
         def run(task):
+            cwd = task.get_cwd()
             cmd = [
                 bld.env.RTEMS_LD[0],
                 "-C",
@@ -606,14 +636,14 @@ class Item(object):
                 "-O",
                 "rap",
                 "-b",
-                task.inputs[0].abspath(),
+                task.inputs[0].path_from(cwd),
                 "-e",
                 "rtems_main",
                 "-s",
                 "-o",
             ]
-            cmd.append(task.outputs[0].abspath())
-            cmd.extend([i.abspath() for i in task.inputs[1:]])
+            cmd.append(task.outputs[0].path_from(cwd))
+            cmd.extend([i.path_from(cwd) for i in task.inputs[1:]])
             cmd.extend(["-l" + l for l in libs])
             return task.exec_command(cmd)
 
@@ -1710,6 +1740,8 @@ def configure_variant(conf, cp, bsp_map, path_list, top_group, variant):
 
     conf.env["TOP"] = conf.path.abspath()
     conf.env["TOPGROUP_UID"] = top_group
+    conf.env["TOP_FROM_BUILD"] = os.path.relpath(
+        conf.path.abspath(), os.path.join(conf.bldnode.abspath(), variant))
     conf.env["VARIANT"] = variant
 
     cic = ConfigItemContext(cp, path_list)
