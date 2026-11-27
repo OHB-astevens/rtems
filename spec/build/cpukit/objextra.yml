@@ -206,6 +206,7 @@ install:
   - cpukit/include/rtems/rtems/semmp.h
   - cpukit/include/rtems/rtems/signalmp.h
   - cpukit/include/rtems/rtems/taskmp.h
+  - cpukit/include/rtems/rtems/supportimpl.h
 - destination: ${BSP_INCLUDEDIR}/rtems/score
   source:
   - cpukit/include/rtems/score/corerwlockimpl.h
@@ -223,7 +224,7 @@ install:
   - cpukit/include/rtems/score/schedulerstrongapa.h
   - cpukit/include/rtems/score/threadmp.h
   - cpukit/include/rtems/score/wkspace.h
-  - cpukit/include/rtems/score/wkspaceinitone.h
+  - cpukit/include/rtems/score/greedyimpl.h
 - destination: ${BSP_INCLUDEDIR}/rtems/trace
   source:
   - cpukit/include/rtems/trace/rtems-trace-buffer-vars.h
@@ -906,7 +907,6 @@ source:
 - cpukit/score/src/heapfree.c
 - cpukit/score/src/heapgetfreeinfo.c
 - cpukit/score/src/heapgetinfo.c
-- cpukit/score/src/heapgreedy.c
 - cpukit/score/src/heapiterate.c
 - cpukit/score/src/heapnoextend.c
 - cpukit/score/src/heapresizeblock.c
@@ -1009,6 +1009,12 @@ source:
 - cpukit/score/src/wkspaceallocate.c
 - cpukit/score/src/wkspacefree.c
 - cpukit/score/src/wkspaceisunifieddefault.c
-- cpukit/score/src/wkspacemallocinitunified.c
 - cpukit/score/src/wkstringduplicate.c
+- cpukit/libcsupport/src/mallocgetstatistics.c
+- cpukit/libcsupport/src/wkspacefallbackmalloc.c
+- cpukit/rtems/src/heapgetstatistics.c
+- cpukit/rtems/src/regiongetstatistics.c
+- cpukit/rtems/src/workspacegetstatistics.c
+- cpukit/score/src/greedy.c
+- cpukit/score/src/wkspacefallbackdefault.c
 type: build

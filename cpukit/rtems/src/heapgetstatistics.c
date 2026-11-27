@@ -3,14 +3,14 @@
 /**
  * @file
  *
- * @ingroup RTEMSScoreWorkspace
+ * @ingroup RTEMSImplClassicSupport
  *
- * @brief This source file contains the default definition of
- *   ::_Workspace_Malloc_initializer.
+ * @brief This source file contains the implementation of
+ *   _RTEMS_Get_heap_statistics().
  */
 
 /*
- * Copyright (C) 2020 embedded brains GmbH & Co. KG
+ * Copyright (C) 2026 embedded brains GmbH & Co. KG
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,32 @@
 #include "config.h"
 #endif
 
-#include <rtems/score/wkspacedata.h>
+#include <rtems/rtems/supportimpl.h>
+#include <rtems/score/heapfirstfitimpl.h>
 
-struct Heap_Control *( *const _Workspace_Malloc_initializer )( void ) =
-  _Workspace_Malloc_initialize_separate;
+void _RTEMS_Get_heap_statistics(
+  Heap_Control          *heap,
+  rtems_heap_statistics *stats
+)
+{
+  const Heap_Statistics *heap_stats;
+  Heap_Information       free_info;
+
+  _Heap_Protection_free_all_delayed_blocks( heap );
+  _Heap_Get_free_information( heap, &free_info );
+  heap_stats = &heap->stats;
+
+  stats->lifetime_allocated = heap_stats->lifetime_allocated;
+  stats->lifetime_freed = heap_stats->lifetime_freed;
+  stats->size = heap_stats->size;
+  stats->free_size = heap_stats->free_size;
+  stats->largest_free_size = free_info.largest;
+  stats->min_free_size = heap_stats->min_free_size;
+  stats->free_blocks = heap_stats->free_blocks;
+  stats->max_free_blocks = heap_stats->max_free_blocks;
+  stats->used_blocks = heap_stats->used_blocks;
+  stats->allocs = heap_stats->allocs;
+  stats->failed_allocs = heap_stats->failed_allocs;
+  stats->frees = heap_stats->frees;
+  stats->resizes = heap_stats->resizes;
+}

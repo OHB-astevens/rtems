@@ -9,7 +9,7 @@
  */
 
 /*
- * Copyright (C) 2020, 2021 embedded brains GmbH & Co. KG
+ * Copyright (C) 2020, 2026 embedded brains GmbH & Co. KG
  * Copyright (C) 1988, 2008 On-Line Applications Research Corporation (OAR)
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,9 @@
 #include <rtems/rtems/attr.h>
 #include <rtems/rtems/options.h>
 #include <rtems/rtems/status.h>
+#include <rtems/rtems/support.h>
 #include <rtems/rtems/types.h>
+#include <rtems/score/basedefs.h>
 #include <rtems/score/heapinfo.h>
 
 #ifdef __cplusplus
@@ -120,6 +122,53 @@ rtems_status_code rtems_region_get_segment_size(
   rtems_id   id,
   void      *segment,
   uintptr_t *size
+);
+
+/* Find related documentation with spec:/rtems/region/if/get-statistics */
+
+/**
+ * @ingroup RTEMSAPIClassicRegion
+ *
+ * @brief Gets the region statistics.
+ *
+ * @param id is the region identifier.
+ *
+ * @param[out] stats is the pointer to an rtems_heap_statistics object. When
+ *   the directive call is successful, the statistics of the region will be
+ *   stored in this object.
+ *
+ * @retval ::RTEMS_SUCCESSFUL The requested operation was successful.
+ *
+ * @retval ::RTEMS_INVALID_ADDRESS The `stats` parameter was NULL.
+ *
+ * @retval ::RTEMS_INVALID_ID There was no region associated with the
+ *   identifier specified by `id`.
+ *
+ * @par Notes
+ * The directive visits the free blocks of the region to get the size of the
+ * largest free block, so its execution time depends on the number of free
+ * blocks.
+ *
+ * @par Constraints
+ * @parblock
+ * The following constraints apply to this directive:
+ *
+ * - The directive is not included in the pre-qualified feature set of RTEMS.
+ *   Applications which are restricted to only use interfaces of the
+ *   pre-qualified feature set of RTEMS shall not use the directive.
+ *
+ * - The directive may be called from within device driver initialization
+ *   context.
+ *
+ * - The directive may be called from within task context.
+ *
+ * - The directive may obtain and release the object allocator mutex. This may
+ *   cause the calling task to be preempted.
+ * @endparblock
+ */
+rtems_status_code rtems_region_get_statistics(
+  rtems_id               id,
+  rtems_heap_statistics *stats
 );
 
 /* Find related documentation with spec:/rtems/region/if/create */
@@ -660,6 +709,9 @@ rtems_status_code rtems_region_resize_segment(
  *
  * To get only the free information of the region use
  * rtems_region_get_free_information().
+ *
+ * The directive is deprecated. Use rtems_region_get_statistics() instead. The
+ * directive will be removed after the RTEMS 7 release.
  * @endparblock
  *
  * @par Constraints
@@ -679,10 +731,8 @@ rtems_status_code rtems_region_resize_segment(
  *   cause the calling task to be preempted.
  * @endparblock
  */
-rtems_status_code rtems_region_get_information(
-  rtems_id                id,
-  Heap_Information_block *the_info
-);
+RTEMS_DEPRECATED rtems_status_code
+rtems_region_get_information( rtems_id id, Heap_Information_block *the_info );
 
 /* Find related documentation with spec:/rtems/region/if/get-free-information */
 
@@ -721,6 +771,9 @@ rtems_status_code rtems_region_get_information(
  * to execute. Typically, there are many used blocks and a much smaller number
  * of free blocks making a call to this directive less expensive than a call to
  * rtems_region_get_information().
+ *
+ * The directive is deprecated. Use rtems_region_get_statistics() instead. The
+ * directive will be removed after the RTEMS 7 release.
  * @endparblock
  *
  * @par Constraints
@@ -740,7 +793,7 @@ rtems_status_code rtems_region_get_information(
  *   cause the calling task to be preempted.
  * @endparblock
  */
-rtems_status_code rtems_region_get_free_information(
+RTEMS_DEPRECATED rtems_status_code rtems_region_get_free_information(
   rtems_id                id,
   Heap_Information_block *the_info
 );

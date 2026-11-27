@@ -674,6 +674,5 @@ source:
 - cpukit/score/src/watchdogtick.c
 - cpukit/score/src/watchdogtickssinceboot.c
 - cpukit/score/src/watchdogtimeslicedefault.c
-- cpukit/score/src/wkspacemallocinitdefault.c
 target: rtemscpu
 type: build

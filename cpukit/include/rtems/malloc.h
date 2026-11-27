@@ -13,6 +13,7 @@
 /*
  * COPYRIGHT (c) 1989-2011.
  * On-Line Applications Research Corporation (OAR).
+ * Copyright (C) 2026 embedded brains GmbH & Co. KG
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -217,6 +218,23 @@ void *rtems_calloc(size_t nelem, size_t elsize)
   RTEMS_MALLOCLIKE RTEMS_ALLOC_SIZE_2(1, 2) RTEMS_WARN_UNUSED_RESULT;
 
 /**
+ * @brief Gets the statistics of the heap which serves malloc().
+ *
+ * The function visits the free blocks of the heap to get the size of the
+ * largest free block, so its execution time depends on the number of free
+ * blocks.  It does not change errno.
+ *
+ * @param[out] stats is the pointer to an object.  When the function call is
+ *   successful, the statistics of the heap will be stored in this object.
+ *   When thread dispatching is disabled, the object will be filled with zero.
+ *
+ * @retval 0 The function call is successful.
+ * @retval EINVAL The @a stats parameter was NULL.
+ * @retval EPROTO The function was called with thread dispatching disabled.
+ */
+int malloc_get_statistics( rtems_heap_statistics *stats );
+
+/**
  * @brief Extends the memory available for the heap using the memory area
  * starting at @a area_begin of size @a area_size bytes.
  *
@@ -226,8 +244,13 @@ void *rtems_calloc(size_t nelem, size_t elsize)
  * which cover the gaps.  Extending with an inappropriate memory area will
  * corrupt the heap.
  *
+ * The function may be called before the system initialization creates the
+ * threads, for example in bsp_start().
+ *
  * @retval RTEMS_SUCCESSFUL Successful operation.
  * @retval RTEMS_INVALID_ADDRESS Invalid memory area.
+ * @retval RTEMS_INCORRECT_STATE The function was called with thread
+ *   dispatching disabled.
  */
 rtems_status_code rtems_heap_extend(
   void *area_begin,

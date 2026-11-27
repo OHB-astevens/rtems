@@ -5,12 +5,12 @@
  *
  * @ingroup RTEMSScoreWorkspace
  *
- * @brief This source file contains the _Workspace_Handler_initialization()
- *   implementation which supports more than one memory area.
+ * @brief This source file contains the default definition of
+ *   ::_Workspace_Fallback_heap.
  */
 
 /*
- * Copyright (C) 2020 embedded brains GmbH & Co. KG
+ * Copyright (C) 2026 embedded brains GmbH & Co. KG
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,9 +38,6 @@
 #include "config.h"
 #endif
 
-#include <rtems/score/wkspaceinitmulti.h>
+#include <rtems/score/wkspacedata.h>
 
-void _Workspace_Handler_initialization( void )
-{
-  _Workspace_Initialize_for_multiple_areas();
-}
+struct Heap_Control *const *const _Workspace_Fallback_heap;

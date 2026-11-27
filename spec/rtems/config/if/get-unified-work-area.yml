@@ -3,7 +3,7 @@ brief: |
   Indicates if the RTEMS Workspace and C Program Heap are configured to be
   unified for this application.
 copyrights:
-- Copyright (C) 2020 embedded brains GmbH & Co. KG
+- Copyright (C) 2020, 2026 embedded brains GmbH & Co. KG
 definition:
   default:
     attributes: null
@@ -34,6 +34,8 @@ params: []
 return:
   return: |
     Returns true, if the RTEMS Workspace and C Program Heap are configured to be
-    unified for this application, otherwise false.
+    unified for this application, otherwise false. In a unified configuration, the
+    RTEMS Workspace allocates from the C Program Heap if its storage area is
+    exhausted.
   return-values: []
 type: interface

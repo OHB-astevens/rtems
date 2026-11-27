@@ -43,15 +43,19 @@
 #include <rtems.h>
 #include <rtems/malloc.h>
 #include <rtems/shell.h>
-#include <rtems/score/protectedheap.h>
-#include <rtems/score/wkspace.h>
+#include <rtems/score/wkspacedata.h>
 #include "internal.h"
 
 void rtems_shell_print_unified_work_area_message(void)
 {
-  printf( "C Program Heap and RTEMS Workspace are %s.\n",
-    rtems_configuration_get_unified_work_area() ? "the same" : "separate"
-  );
+  printf( "C Program Heap and RTEMS Workspace are separate.\n" );
+
+  if ( _Workspace_Fallback_heap != NULL ) {
+    printf(
+      "RTEMS Workspace allocates from the C Program Heap if its "
+      "storage area is exhausted.\n"
+    );
+  }
 }
 
 static int rtems_shell_main_wkspace_info(
@@ -59,14 +63,12 @@ static int rtems_shell_main_wkspace_info(
   char *argv[] RTEMS_UNUSED
 )
 {
-  Heap_Information_block info;
+  rtems_heap_statistics stats;
 
   rtems_shell_print_unified_work_area_message();
 
-  _Protected_heap_Get_information( &_Workspace_Area, &info );
-  rtems_shell_print_heap_info( "free", &info.Free );
-  rtems_shell_print_heap_info( "used", &info.Used );
-  rtems_shell_print_heap_stats( &info.Stats );
+  (void) rtems_workspace_get_statistics( &stats );
+  rtems_shell_print_heap_statistics( &stats );
 
   return 0;
 }

@@ -2,11 +2,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 brief: |
   Gets the region information.
 copyrights:
-- Copyright (C) 2021 embedded brains GmbH & Co. KG
+- Copyright (C) 2021, 2026 embedded brains GmbH & Co. KG
 - Copyright (C) 1988, 2008 On-Line Applications Research Corporation (OAR)
 definition:
   default:
-    attributes: null
+    attributes: ${/rtems/basedefs/if/deprecated:/name}
     body: null
     params:
     - ${../../type/if/id:/name} ${.:/params[0]/name}
@@ -45,6 +45,9 @@ notes: |
 
   To get only the free information of the region use
   ${get-free-information:/name}.
+
+  The directive is deprecated. Use ${get-statistics:/name} instead. The directive
+  will be removed after the RTEMS 7 release.
 params:
 - description: |
     is the region identifier.

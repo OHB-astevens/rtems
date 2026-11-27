@@ -50,6 +50,7 @@
 #include <stdint.h>
 #include <rtems/config.h>
 #include <rtems/rtems/types.h>
+#include <rtems/score/basedefs.h>
 #include <rtems/score/heapinfo.h>
 
 #ifdef __cplusplus
@@ -305,6 +306,10 @@ bool rtems_workspace_free( void *pointer );
  * @return Returns true, if getting the information was successful, otherwise
  *   false.
  *
+ * @par Notes
+ * The directive is deprecated. Use rtems_workspace_get_statistics() instead.
+ * The directive will be removed after the RTEMS 7 release.
+ *
  * @par Constraints
  * @parblock
  * The following constraints apply to this directive:
@@ -322,7 +327,9 @@ bool rtems_workspace_free( void *pointer );
  *   cause the calling task to be preempted.
  * @endparblock
  */
-bool rtems_workspace_get_information( Heap_Information_block *the_info );
+RTEMS_DEPRECATED bool rtems_workspace_get_information(
+  Heap_Information_block *the_info
+);
 
 /* Find related documentation with spec:/rtems/workspace/if/greedy-allocate */
 
@@ -341,6 +348,11 @@ bool rtems_workspace_get_information( Heap_Information_block *the_info );
  *
  * @return The returned pointer value may be used to free the greedy allocation
  *   by calling rtems_workspace_greedy_free().
+ *
+ * @par Notes
+ * If the RTEMS Workspace allocates from the C Program Heap when its storage
+ * area is exhausted, then the directive also uses all blocks of the C Program
+ * Heap.
  *
  * @par Constraints
  * @parblock
@@ -429,6 +441,136 @@ void *rtems_workspace_greedy_allocate_all_except_largest(
  * @endparblock
  */
 void rtems_workspace_greedy_free( void *opaque );
+
+/* Find related documentation with spec:/rtems/workspace/if/heap-statistics */
+
+/**
+ * @ingroup RTEMSAPIClassicWorkspace
+ *
+ * @brief This structure contains the statistics of a heap.
+ *
+ * The heap which serves malloc(), the RTEMS Workspace and each region provide
+ * these statistics.
+ */
+typedef struct {
+  /**
+   * @brief This member contains the number of bytes which the heap allocated
+   *   since its initialization.
+   */
+  uint64_t lifetime_allocated;
+
+  /**
+   * @brief This member contains the number of bytes which the heap freed since
+   *   its initialization.
+   */
+  uint64_t lifetime_freed;
+
+  /**
+   * @brief This member contains the size in bytes of the memory areas which the
+   *   heap manages.
+   */
+  size_t size;
+
+  /**
+   * @brief This member contains the number of free bytes of the heap.
+   */
+  size_t free_size;
+
+  /**
+   * @brief This member contains the size in bytes of the largest free block of
+   *   the heap.
+   */
+  size_t largest_free_size;
+
+  /**
+   * @brief This member contains the least number of free bytes of the heap since
+   *   its initialization.
+   */
+  size_t min_free_size;
+
+  /**
+   * @brief This member contains the number of free blocks of the heap.
+   */
+  uint32_t free_blocks;
+
+  /**
+   * @brief This member contains the largest number of free blocks of the heap
+   *   since its initialization.
+   */
+  uint32_t max_free_blocks;
+
+  /**
+   * @brief This member contains the number of used blocks of the heap.
+   */
+  uint32_t used_blocks;
+
+  /**
+   * @brief This member contains the number of successful allocations since the
+   *   initialization of the heap.
+   */
+  uint32_t allocs;
+
+  /**
+   * @brief This member contains the number of failed allocations since the
+   *   initialization of the heap.
+   */
+  uint32_t failed_allocs;
+
+  /**
+   * @brief This member contains the number of successful frees since the
+   *   initialization of the heap.
+   */
+  uint32_t frees;
+
+  /**
+   * @brief This member contains the number of successful resizes since the
+   *   initialization of the heap.
+   */
+  uint32_t resizes;
+} rtems_heap_statistics;
+
+/* Find related documentation with spec:/rtems/workspace/if/get-statistics */
+
+/**
+ * @ingroup RTEMSAPIClassicWorkspace
+ *
+ * @brief Gets the statistics of the RTEMS Workspace.
+ *
+ * @param[out] stats is the pointer to an rtems_heap_statistics object. When
+ *   the directive call is successful, the statistics of the RTEMS Workspace
+ *   will be stored in this object.
+ *
+ * @return Returns true, if getting the statistics was successful, otherwise
+ *   false.
+ *
+ * @par Notes
+ * @parblock
+ * The directive visits the free blocks of the RTEMS Workspace to get the size
+ * of the largest free block, so its execution time depends on the number of
+ * free blocks.
+ *
+ * The RTEMS Workspace provides no resize operation, so the directive sets the
+ * `resizes` member to zero.
+ * @endparblock
+ *
+ * @par Constraints
+ * @parblock
+ * The following constraints apply to this directive:
+ *
+ * - The directive is not included in the pre-qualified feature set of RTEMS.
+ *   Applications which are restricted to only use interfaces of the
+ *   pre-qualified feature set of RTEMS shall not use the directive.
+ *
+ * - The directive may be called from within device driver initialization
+ *   context.
+ *
+ * - The directive may be called from within task context.
+ *
+ * - The directive may obtain and release the object allocator mutex. This may
+ *   cause the calling task to be preempted.
+ * @endparblock
+ */
+bool rtems_workspace_get_statistics( rtems_heap_statistics *stats );
 
 #ifdef __cplusplus
 }

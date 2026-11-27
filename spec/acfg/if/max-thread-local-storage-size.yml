@@ -1,7 +1,7 @@
 SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 appl-config-option-type: integer
 copyrights:
-- Copyright (C) 2020 embedded brains GmbH & Co. KG
+- Copyright (C) 2020, 2026 embedded brains GmbH & Co. KG
 default-value: 0
 description: |
   If the value of this configuration option is greater than zero, then it defines
@@ -31,6 +31,18 @@ notes: |
   used by the application in the statically-linked executable is greater than a
   non-zero value of this configuration option, then a fatal error will occur
   during system initialization.
+
+  The RTEMS Workspace reserves a thread-local storage area for each configured
+  thread which allocates its stack from the RTEMS Workspace. If the value of this
+  configuration option is zero, then the size of each reserved area is 64 times
+  the size of a pointer. If the RTEMS Workspace reserves at least one area and
+  the thread-local storage allocation size of the executable exceeds the reserved
+  size, then the fatal error ${/score/interr/if/too-large-tls-size:/name} will
+  occur during system initialization.
+
+  With ${unified-work-areas:/name} or an unlimited object class, the RTEMS
+  Workspace allocates an area which exceeds the reserved size from the C Program
+  Heap. The fatal error does not occur in this case.
 
   Use ${/rtems/basedefs/if/align-up:/name} and
   ${/rtems/task/if/storage-alignment:/name} to adjust the size to meet the

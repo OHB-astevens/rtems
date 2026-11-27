@@ -14,6 +14,7 @@
 /*
  *  COPYRIGHT (c) 1989-2011.
  *  On-Line Applications Research Corporation (OAR).
+ *  Copyright (C) 2026 embedded brains GmbH & Co. KG
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,6 +45,7 @@
 #include <stdint.h>
 
 #include <rtems/score/heap.h>
+#include <rtems/rtems/support.h>
 #include <rtems/rtems/tasks.h>
 
 #ifdef __cplusplus
@@ -82,18 +84,24 @@ void malloc_set_heap_pointer(Heap_Control *new_heap);
 Heap_Control *malloc_get_heap_pointer( void );
 
 /**
- * @brief Get free malloc information.
- * 
- * Find amount of free heap remaining
+ * @brief Gets the number of free bytes of the heap which serves malloc().
+ *
+ * An allocation of this size may fail, since the free bytes may be spread
+ * over several free blocks.
+ *
+ * @return Returns the number of free bytes of the heap.
  */
 extern size_t malloc_free_space(void);
 
 /**
  * @brief Get malloc status information.
- * 
+ *
  * Find amount of free heap remaining.
+ *
+ * @deprecated Use malloc_get_statistics() instead.  The function will be
+ *   removed after the RTEMS 7 release.
  */
-extern int malloc_info(Heap_Information_block *the_info);
+RTEMS_DEPRECATED extern int malloc_info(Heap_Information_block *the_info);
 
 /*
  *  Prototypes required to install newlib reentrancy user extension
@@ -147,8 +155,23 @@ typedef struct {
 } rtems_resource_posix_api;
 
 typedef struct {
-  Heap_Information_block workspace_info;
-  Heap_Information_block heap_info;
+  /**
+   * @brief This member contains the statistics of the RTEMS Workspace.
+   *
+   * The members which count events since the initialization of the heap and
+   * the members which record a least or largest value are zero.
+   */
+  rtems_heap_statistics workspace_info;
+
+  /**
+   * @brief This member contains the statistics of the heap which serves
+   *   malloc().
+   *
+   * The members which count events since the initialization of the heap and
+   * the members which record a least or largest value are zero.
+   */
+  rtems_heap_statistics heap_info;
+
   uint32_t active_posix_key_value_pairs;
   uint32_t active_posix_keys;
   rtems_resource_rtems_api rtems_api;
